@@ -1,0 +1,78 @@
+buildscript {
+    repositories {
+        maven { url "http://repo.spring.io/milestone" }
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'jacoco'
+
+def buildNum = hasProperty('build_num') ? build_num : 0
+version = '0.0.' + buildNum
+
+repositories {
+    maven { url "http://repo.spring.io/milestone" }
+    mavenCentral()
+}
+
+dependencies {
+    compile('javax.inject:javax.inject:1')
+    compile('com.google.guava:guava:18.0')
+    compile('org.apache.httpcomponents:httpclient:4.4')
+    compile('org.apache.commons:commons-collections4:4.0')
+    compile('org.apache.commons:commons-lang3:3.4')
+    compile('javax.validation:validation-api:1.1.0.Final')
+    compile 'org.springframework:spring-context:4.3.9.RELEASE'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.slf4j:slf4j-simple:1.7.25'
+    compile 'org.yaml:snakeyaml:1.18'
+    compile("com.h2database:h2:1.4.196")
+
+    testCompile 'junit:junit:4.12'
+    testCompile('org.springframework:spring-test:4.3.9.RELEASE')
+    testCompile('org.spockframework:spock-spring:1.0-groovy-2.4')
+
+    test {
+        // listen to events in the test execution lifecycle
+        beforeTest { descriptor ->
+            logger.lifecycle('Running test: '.plus(descriptor))
+        }
+
+        testLogging {
+            events 'started', 'passed', 'skipped', 'failed'
+            exceptionFormat = 'full'
+        }
+
+        reports {
+            junitXml.enabled = true
+            html.enabled = true
+        }
+    }
+
+    jacocoTestReport {
+        reports {
+            xml {
+                enabled = true // coveralls plugin depends on xml format report
+            }
+
+            html {
+                enabled = true
+            }
+        }
+
+        afterEvaluate {
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it, exclude:
+                        ['**/Application',
+                         '**/model/**',
+                        ])
+            })
+        }
+    }
+}
+
+
